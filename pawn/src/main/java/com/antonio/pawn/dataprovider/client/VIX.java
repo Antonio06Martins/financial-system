@@ -309,3 +309,9 @@ public class VIX {
 //List<B> filteredListB = listB.stream()
 //    .filter(b -> !namesToRemove.contains(b.getName()))
 //    .collect(Collectors.toList());
+
+
+
+//BigDecimal totalBalance = listB.stream()
+//    .map(B::getBalance)
+//    .reduce(BigDecimal.ZERO, BigDecimal::add);
