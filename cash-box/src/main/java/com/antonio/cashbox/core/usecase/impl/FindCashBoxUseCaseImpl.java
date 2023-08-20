@@ -1,8 +1,7 @@
 package com.antonio.cashbox.core.usecase.impl;
 
 import com.antonio.cashbox.core.dataprovider.FindCashBoxBy;
-import com.antonio.cashbox.core.domain.CashBox;
-import com.antonio.cashbox.core.enumeration.StatusBox;
+import com.antonio.cashbox.core.domain.CashBoxDomain;
 import com.antonio.cashbox.core.enumeration.TypeBox;
 import com.antonio.cashbox.core.usecase.FindCashBoxUseCase;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +19,8 @@ public class FindCashBoxUseCaseImpl implements FindCashBoxUseCase {
     private final FindCashBoxBy findCashBoxBy;
 
     @Override
-    public List<CashBox> find(String customerId, TypeBox typeBox, StatusBox statusBox) {
-        return Optional.ofNullable(findCashBoxBy.findAll(customerId, typeBox, statusBox))
+    public List<CashBoxDomain> find(String customerId, TypeBox typeBox) {
+        return Optional.ofNullable(findCashBoxBy.findAll(customerId, typeBox))
                 .orElseThrow(() -> new RuntimeException("Cash Box not found"));
     }
 }

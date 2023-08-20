@@ -1,6 +1,5 @@
 package com.antonio.cashbox.entrypoint.controller;
 
-import com.antonio.cashbox.core.enumeration.StatusBox;
 import com.antonio.cashbox.core.enumeration.TypeBox;
 import com.antonio.cashbox.entrypoint.controller.request.CashBoxRequest;
 import com.antonio.cashbox.entrypoint.controller.response.CashBoxResponse;
@@ -21,7 +20,7 @@ import java.util.List;
 @RequestMapping("/v1/cashbox")
 public interface CashBoxController {
 
-    @Operation(summary = "CASH BOX")
+    @Operation(summary = "CASH BOX - insert")
     @Parameter(name = "customer-id", in = ParameterIn.HEADER, required = true, description = "customerId", example = "30241106")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Criado com sucesso")
@@ -34,10 +33,9 @@ public interface CashBoxController {
             @RequestBody CashBoxRequest cashBoxRequest
     );
 
-    @Operation(summary = "CASH BOX")
+    @Operation(summary = "CASH BOX - findByCustomerId")
     @Parameter(name = "customer-id", in = ParameterIn.HEADER, required = true, description = "customerId", example = "30241106")
-    @Parameter(name = "typeBox", in = ParameterIn.HEADER, required = true, description = "typeBox", example = "PIGGY")
-    @Parameter(name = "statusBox", in = ParameterIn.HEADER, required = false, description = "statusBox", example = "UNLOCKED")
+    @Parameter(name = "typeBox", in = ParameterIn.HEADER, required = false, description = "typeBox", example = "PIGGY")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Buscado com sucesso")
     })
@@ -45,25 +43,37 @@ public interface CashBoxController {
     @ResponseStatus(HttpStatus.OK)
     List<CashBoxResponse> findByCustomerId(
             @RequestHeader("customer-id") final String customerId,
-            @RequestHeader("typeBox") final TypeBox typeBox,
-            @RequestHeader(value = "statusBox", required = false) final StatusBox statusBox
+            @RequestHeader(value = "typeBox", required = false) final TypeBox typeBox
 
     );
 
-    @Operation(summary = "Piggy")
+    @Operation(summary = "CASH BOX - updateAmount")
     @Parameter(name = "customer-id", in = ParameterIn.HEADER, required = true, description = "customerId", example = "30241106")
     @Parameter(name = "nameBox", in = ParameterIn.HEADER, required = false, description = "nameBox", example = "PIGGY_1")
     @Parameter(name = "amount", in = ParameterIn.HEADER, required = false, description = "amount", example = "0")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Alterado com sucesso")
+    })
+    @PatchMapping("/update-amount")
+    @ResponseStatus(HttpStatus.OK)
+    ResponseEntity<Void> updateAmount(
+            @RequestHeader("customer-id") final String customerId,
+            @RequestHeader("nameBox") final String nameBox,
+            @RequestHeader("amount") final BigDecimal amount
+    );
+
+    @Operation(summary = "CASH BOX - update-amount-blocked")
+    @Parameter(name = "customer-id", in = ParameterIn.HEADER, required = true, description = "customerId", example = "30241106")
+    @Parameter(name = "nameBox", in = ParameterIn.HEADER, required = false, description = "nameBox", example = "PIGGY_1")
     @Parameter(name = "amountBlocked", in = ParameterIn.HEADER, required = false, description = "amountBlocked", example = "0")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Alterado com sucesso")
     })
-    @PatchMapping("/update")
+    @PatchMapping("/update-amount-blocked")
     @ResponseStatus(HttpStatus.OK)
-    ResponseEntity<Void> update(
+    ResponseEntity<Void> updateAmountBlocked(
             @RequestHeader("customer-id") final String customerId,
             @RequestHeader("nameBox") final String nameBox,
-            @RequestHeader("amount") final BigDecimal amount,
             @RequestHeader("amountBlocked") final BigDecimal amountBlocked
     );
 }

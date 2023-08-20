@@ -2,16 +2,16 @@ package com.antonio.cashbox.core.usecase.impl;
 
 import com.antonio.cashbox.core.dataprovider.FindCashBoxBy;
 import com.antonio.cashbox.core.dataprovider.UpdateCashBox;
-import com.antonio.cashbox.core.domain.CashBox;
-import com.antonio.cashbox.core.enumeration.StatusBox;
+import com.antonio.cashbox.core.domain.CashBoxDomain;
+import com.antonio.cashbox.core.domain.SelectBalanceDomain;
+import com.antonio.cashbox.core.domain.SelectBlockedBalanceDomain;
 import com.antonio.cashbox.core.usecase.UpdateCashBoxUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Objects;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -23,79 +23,102 @@ public class UpdateCashBoxUseCaseImpl implements UpdateCashBoxUseCase {
 
     private final UpdateCashBox updateCashBox;
 
+
+
     @Override
-    public void update(String customerId, String nameBox, BigDecimal amount, BigDecimal amountBlocked) {
+    public void updateAmount(String customerId, String nameBox, BigDecimal amount) {
+        final var cashBox = Optional.ofNullable(findCashBoxBy.findUnique(customerId, nameBox))
+                .orElseThrow(() -> new IllegalArgumentException("Cash Box not found"));
 
-        var cashBoxBase = findCashBoxBy.findUnique(customerId, nameBox);
-        var cashBoxCheck = cashBoxBase.getStatusBox().equals(StatusBox.BLOCKED);
-        var amountBlockedCheck = Optional.ofNullable(amountBlocked);
+        final var accountBalanceInBase = getSelectBalanceDomain(cashBox);
+        final var amountBlocked = getSelectBlockedBalanceDomain(cashBox);
 
-        if(!cashBoxCheck && Objects.equals(amountBlocked, new BigDecimal(BigInteger.ZERO))) {
-            var newUpdateCashBox = CashBox.builder()
-                    .id(cashBoxBase.getId())
-                    .customerId(customerId)
-                    .nameBox(nameBox)
-                    .accountBalance(getAccountBalance(amount, cashBoxBase))
-                    .amountBlocked(cashBoxBase.getAmountBlocked())
-                    .typeBox(cashBoxBase.getTypeBox())
-                    .statusBox(cashBoxBase.getStatusBox()) //tem que fazer aqui para considerar colocando saldo e mudando o status para parcial
+        SelectBlockedBalanceDomain selectBlockedBalanceDomain = null;
+        if(amountBlocked.amountBlocked().compareTo(BigDecimal.ZERO) == 0 ) {
+            selectBlockedBalanceDomain = cashBox.getSelectBlockedBalance();
+        } else if(amountBlocked.amountBlocked().compareTo(BigDecimal.ZERO) > 0) {
+            selectBlockedBalanceDomain = SelectBlockedBalanceDomain.builder()
+                    .amountBlocked(BigDecimal.ZERO)
+                    .lastUpdate(LocalDateTime.now())
                     .build();
-            updateCashBox.update(newUpdateCashBox);
-        } else if(amountBlockedCheck.isPresent()) {
-            var newUpdateCashBox = CashBox.builder()
-                    .id(cashBoxBase.getId())
-                    .customerId(customerId)
-                    .nameBox(cashBoxBase.getNameBox())
-                    .accountBalance(cashBoxBase.getAccountBalance())
-                    .amountBlocked(getBlocked(amountBlocked, cashBoxBase))
-                    .typeBox(cashBoxBase.getTypeBox())
-                    .statusBox(getStatusBox(cashBoxBase, amountBlocked))
+        } else {
+            selectBlockedBalanceDomain = SelectBlockedBalanceDomain.builder()
+                    .amountBlocked(amountBlocked.amountBlocked().subtract(amount))
+                    .lastUpdate(LocalDateTime.now())
                     .build();
-            updateCashBox.update(newUpdateCashBox);
-        } else {
-            throw new IllegalStateException("Não corresponde ao Cash Box selecionado");
         }
+
+        updateCashBox.update(CashBoxDomain.builder()
+                        .id(cashBox.getId())
+                        .customerId(customerId)
+                        .nameBox(nameBox)
+                        .selectBalance(SelectBalanceDomain.builder()
+                                .accountBalance(accountBalanceInBase.accountBalance().add(amount))
+                                .lastUpdate(LocalDateTime.now())
+                                .build())
+                        .selectBlockedBalance(selectBlockedBalanceDomain)
+                        .typeBox(cashBox.getTypeBox())
+                        .createdIn(cashBox.getCreatedIn())
+                .build());
     }
 
-    private static StatusBox getStatusBox(CashBox cashBoxBase, BigDecimal amountBlocked) {
-        StatusBox statusBox = null;
+    @Override
+    public void updateAmountBlocked(String customerId, String nameBox, BigDecimal amountBlocked) {
+        final var cashBox = Optional.ofNullable(findCashBoxBy.findUnique(customerId, nameBox))
+                .orElseThrow(() -> new IllegalArgumentException("Cash Box not found"));
 
-        var saldoAgoraDeBloqueio = getBlocked(amountBlocked, cashBoxBase);
+        final var accountBalanceInBase = getSelectBalanceDomain(cashBox);
+        final var amountBlockedInBase = getSelectBlockedBalanceDomain(cashBox);
 
-        if(saldoAgoraDeBloqueio.compareTo(cashBoxBase.getAccountBalance()) == 0) {
-            statusBox = StatusBox.BLOCKED;
-
-        } else if(cashBoxBase.getAccountBalance().compareTo(saldoAgoraDeBloqueio) == 1 && saldoAgoraDeBloqueio.compareTo(BigDecimal.ZERO) == 1) {
-            statusBox = StatusBox.PARTIALLY_BLOCKED;
-
-        } else if(cashBoxBase.getAccountBalance().compareTo(saldoAgoraDeBloqueio) == 1) {
-            statusBox = StatusBox.UNLOCKED;
-        } else if(saldoAgoraDeBloqueio.compareTo(cashBoxBase.getAccountBalance()) == 1) {
-            throw new IllegalArgumentException("Invalid");
+        if(accountBalanceInBase.accountBalance().add(amountBlockedInBase.amountBlocked())
+                .compareTo(amountBlockedInBase.amountBlocked().add(amountBlocked)) < 0) {
+            throw new IllegalArgumentException("Saldo insuficiente para bloqueio");
         }
 
-        return statusBox;
+        SelectBalanceDomain selectBalanceDomain = null;
+        if(accountBalanceInBase.accountBalance().compareTo(BigDecimal.ZERO) == 0) {
+            selectBalanceDomain = cashBox.getSelectBalance();
+        } else {
+            selectBalanceDomain = SelectBalanceDomain.builder()
+                    .accountBalance(accountBalanceInBase.accountBalance().subtract(amountBlocked))
+                    .lastUpdate(LocalDateTime.now())
+                    .build();
+        }
+
+        updateCashBox.update(CashBoxDomain.builder()
+                .id(cashBox.getId())
+                .customerId(customerId)
+                .nameBox(nameBox)
+                .selectBalance(selectBalanceDomain)
+                .selectBlockedBalance(SelectBlockedBalanceDomain.builder()
+                        .amountBlocked(amountBlockedInBase.amountBlocked().add(amountBlocked))
+                        .lastUpdate(LocalDateTime.now())
+                        .build())
+                .typeBox(cashBox.getTypeBox())
+                .createdIn(cashBox.getCreatedIn())
+                .build());
     }
 
-    private static BigDecimal getBlocked(BigDecimal amountBlocked, CashBox cashBoxBase) {
-        var negativo = amountBlocked.negate();
-        BigDecimal result = null;
-        if(negativo.equals(amountBlocked)) {
-            result = cashBoxBase.getAmountBlocked().subtract(amountBlocked);
-        } else {
-            result = cashBoxBase.getAmountBlocked().add(amountBlocked);
+    private static SelectBlockedBalanceDomain getSelectBlockedBalanceDomain(CashBoxDomain cashBox) {
+        var amountBlocked = cashBox.getSelectBlockedBalance();
+        if(amountBlocked == null) {
+            amountBlocked = SelectBlockedBalanceDomain.builder()
+                    .amountBlocked(BigDecimal.ZERO)
+                    .build();
         }
-        return result;
+        return amountBlocked;
     }
 
-    private static BigDecimal getAccountBalance(BigDecimal amount, CashBox cashBoxBase) {
-        var negativo = amount.negate();
-        BigDecimal result = null;
-        if(negativo.equals(amount)) {
-            result = cashBoxBase.getAccountBalance().subtract(amount);
-        } else {
-            result = cashBoxBase.getAccountBalance().add(amount);
+    private static SelectBalanceDomain getSelectBalanceDomain(CashBoxDomain cashBox) {
+        var accountBalanceInBase = cashBox.getSelectBalance();
+        if (accountBalanceInBase == null) {
+            accountBalanceInBase = SelectBalanceDomain.builder()
+                    .accountBalance(BigDecimal.ZERO)
+                    .build();
         }
-        return result;
+        return accountBalanceInBase;
     }
 }
+
+// O método compareTo retorna um valor negativo se o primeiro número for menor que o segundo,
+// um valor positivo se o primeiro número for maior que o segundo e zero se os números forem iguais.

@@ -1,24 +1,36 @@
 package com.antonio.cashbox.dataprovider.repository.entity;
 
-import com.antonio.cashbox.core.enumeration.StatusBox;
 import com.antonio.cashbox.core.enumeration.TypeBox;
-import lombok.Data;
+import lombok.Builder;;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-@Data
+@Builder
 @Document(collection = "cash-box")
-public class CashBoxEntity {
+public record CashBoxEntity (
+        @Id
+        String id,
+        String customerId,
+        String nameBox,
+        TypeBox typeBox,
+        LocalDateTime createdIn,
+        SelectBlockedBalanceEntity selectBlockedBalance,
+        SelectBalanceEntity selectBalance) {
 
-    @Id
-    private String id;
-    private String customerId;
-    private String nameBox;
-    private BigDecimal amountBlocked;
-    private BigDecimal accountBalance;
-    private TypeBox typeBox;
-    private StatusBox statusBox;
+        @Builder
+        public record SelectBalanceEntity(
+                BigDecimal accountBalance,
+                LocalDateTime lastUpdate) {
+        }
+
+        @Builder
+        public record SelectBlockedBalanceEntity(
+                BigDecimal amountBlocked,
+                LocalDateTime lastUpdate) {
+        }
+
 
 }

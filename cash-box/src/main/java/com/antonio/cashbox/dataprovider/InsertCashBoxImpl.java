@@ -1,7 +1,7 @@
 package com.antonio.cashbox.dataprovider;
 
 import com.antonio.cashbox.core.dataprovider.InsertCashBox;
-import com.antonio.cashbox.core.domain.CashBox;
+import com.antonio.cashbox.core.domain.CashBoxDomain;
 import com.antonio.cashbox.dataprovider.repository.CashBoxRepository;
 import com.antonio.cashbox.dataprovider.repository.mapper.CashBoxEntityMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,8 @@ public class InsertCashBoxImpl implements InsertCashBox {
     private final CashBoxEntityMapper cashBoxEntityMapper;
 
     @Override
-    public void insert(CashBox cashBox) {
-        var cashBoxEntity = cashBoxEntityMapper.toCashBoxEntity(cashBox);
+    public void insert(CashBoxDomain cashBoxDomain) {
+        var cashBoxEntity = cashBoxEntityMapper.toCashBoxEntity(cashBoxDomain);
         cashBoxRepository.save(cashBoxEntity);
     }
 }

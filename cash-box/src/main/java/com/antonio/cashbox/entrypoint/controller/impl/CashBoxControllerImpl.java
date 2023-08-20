@@ -1,6 +1,5 @@
 package com.antonio.cashbox.entrypoint.controller.impl;
 
-import com.antonio.cashbox.core.enumeration.StatusBox;
 import com.antonio.cashbox.core.enumeration.TypeBox;
 import com.antonio.cashbox.core.usecase.FindCashBoxUseCase;
 import com.antonio.cashbox.core.usecase.InsertCashBoxUseCase;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,22 +25,29 @@ public class CashBoxControllerImpl implements CashBoxController {
     private final FindCashBoxUseCase findCashBoxyByIdUseCase;
     private final UpdateCashBoxUseCase updateCashBoxUseCase;
     private final CashBoxMapper cashBoxMapper;
+
     @Override
     public ResponseEntity<Void> insert(String customerId, CashBoxRequest cashBoxRequest) {
-        var cashBox = cashBoxMapper.toCashBox(cashBoxRequest, customerId);
-        insertCashBoxUseCase.insert(cashBox);
+        insertCashBoxUseCase.insert(customerId, cashBoxRequest.nameBox(), cashBoxRequest.typeBox());
+        return ResponseEntity.status(201).build();
+    }
+
+    @Override
+    public List<CashBoxResponse> findByCustomerId(String customerId, TypeBox typeBox) {
+        final var cashBox = findCashBoxyByIdUseCase.find(customerId, typeBox);
+        return cashBoxMapper.toCashBoxResponse(cashBox);
+    }
+
+    @Override
+    public ResponseEntity<Void> updateAmount(String customerId, String nameBox, BigDecimal amount) {
+        updateCashBoxUseCase.updateAmount(customerId, nameBox, amount);
         return ResponseEntity.ok().build();
     }
 
     @Override
-    public List<CashBoxResponse> findByCustomerId(String customerId, TypeBox typeBox, StatusBox statusBox) {
-        var cashBox = findCashBoxyByIdUseCase.find(customerId, typeBox, statusBox);
-        return cashBox.stream().map(cashBoxMapper::toCashBoxResponse).collect(Collectors.toList());
-    }
-
-    @Override
-    public ResponseEntity<Void> update(String customerId, String nameBox, BigDecimal amount, BigDecimal amountBlocked) {
-        updateCashBoxUseCase.update(customerId, nameBox, amount, amountBlocked);
+    public ResponseEntity<Void> updateAmountBlocked(String customerId, String nameBox, BigDecimal amountBlocked) {
+        updateCashBoxUseCase.updateAmountBlocked(customerId, nameBox, amountBlocked);
         return ResponseEntity.ok().build();
     }
+
 }

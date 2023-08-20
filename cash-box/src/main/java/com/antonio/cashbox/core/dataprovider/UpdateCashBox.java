@@ -1,7 +1,7 @@
 package com.antonio.cashbox.core.dataprovider;
 
-import com.antonio.cashbox.core.domain.CashBox;
+import com.antonio.cashbox.core.domain.CashBoxDomain;
 
 public interface UpdateCashBox {
-    void update(CashBox cashBox);
+    void update(CashBoxDomain cashBoxDomain);
 }

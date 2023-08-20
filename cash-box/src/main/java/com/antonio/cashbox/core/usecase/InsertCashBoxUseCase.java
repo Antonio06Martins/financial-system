@@ -1,9 +1,10 @@
 package com.antonio.cashbox.core.usecase;
 
-import com.antonio.cashbox.core.domain.CashBox;
+import com.antonio.cashbox.core.domain.CashBoxDomain;
+import com.antonio.cashbox.core.enumeration.TypeBox;
 
 public interface InsertCashBoxUseCase {
 
-    void insert(CashBox cashBox);
+    void insert(String customerId, String nameBox, TypeBox typeBox);
 
 }
