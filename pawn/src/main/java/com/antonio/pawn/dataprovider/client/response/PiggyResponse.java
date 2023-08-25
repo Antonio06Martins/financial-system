@@ -1,6 +1,5 @@
 package com.antonio.pawn.dataprovider.client.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 @Builder
