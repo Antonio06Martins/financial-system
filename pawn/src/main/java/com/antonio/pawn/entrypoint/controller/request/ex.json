@@ -1,0 +1,23 @@
+flowchart LR
+A{PIGGY}
+ab[/create\]
+
+B{CASH-BOX}
+bc[/bloqueia saldo\]
+cb[\atualiza saldo bloqueado/]
+
+C{PAWN}
+dc[\remove garantia usada/]
+
+D{CONTRACT}
+da[/consulta garantias\]
+daa[/garantias usadas no contrato\]
+
+
+A --- ab --> B
+C --- bc --> B
+C --- cb --> B
+
+D <--> da --> C
+D --- daa --> C
+D --- dc --> C
