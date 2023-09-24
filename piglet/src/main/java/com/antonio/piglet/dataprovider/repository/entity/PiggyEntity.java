@@ -14,5 +14,6 @@ public class PiggyEntity {
     private String namePiggy;
     private String customerId;
     private Placeholder placeholder;
+    private Boolean hasLock;
 
 }

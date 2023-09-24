@@ -6,6 +6,25 @@ spring:
     mongodb:
       uri: mongodb://c:cleanpassword@localhost:27017
       database: boot-mongodb
+  application:
+    name: cash-box
+  kafka:
+    topic: topic
+    othertopic: othertopic
+    producer:
+      client-id: ${spring.application.name}-producer-stream
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      transaction-id-prefix: ${spring.application.name}
+    consumer:
+      client-id-prefix: ${spring.application.name}-consumer-stream
+      group-id: kafka_streams_cash_box
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: false
+      isolation-level: read_committed
+      auto-offset-reset: earliest
+    bootstrap-servers: localhost:9092
 
 springdoc:
   api-docs:

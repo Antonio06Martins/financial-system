@@ -1,6 +1,5 @@
 package com.antonio.piglet.entrypoint.controller.impl;
 
-import com.antonio.piglet.core.domain.Piggy;
 import com.antonio.piglet.core.enumeration.Placeholder;
 import com.antonio.piglet.core.usecase.FindPiggyByIdUseCase;
 import com.antonio.piglet.core.usecase.InsertPiggyUseCase;
